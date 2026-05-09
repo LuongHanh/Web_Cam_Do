@@ -411,12 +411,513 @@ Sau khi thêm 1 vài dữ liệu và kiểm tra bên phpMyAdmin là thấy ngon 
 
 OK; Giờ đã có phần lõi rồi; Ta cần đưa nó lên web. 
 
+Trước tiên tạo thư mục templates/ cùng cấp với app/ . Trong templates tạo file home.html có nội dung:
+```
+<!DOCTYPE html>
+<html lang="vi">
+
+{% load humanize %}
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>Danh sách con nợ</title>
+
+    <style>
+
+        *{
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body{
+
+            font-family: Arial, Helvetica, sans-serif;
+
+            background: linear-gradient(
+                135deg,
+                #0f172a,
+                #1e293b,
+                #334155
+            );
+
+            min-height: 100vh;
+
+            padding: 40px;
+        }
+
+        .container{
+
+            max-width: 1400px;
+
+            margin: auto;
+
+            background: white;
+
+            border-radius: 25px;
+
+            padding: 35px;
+
+            box-shadow:
+                0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .title{
+
+            text-align: center;
+
+            font-size: 40px;
+
+            margin-bottom: 10px;
+
+            color: #dc2626;
+
+            font-weight: bold;
+        }
+
+        .sub-title{
+
+            text-align: center;
+
+            color: #64748b;
+
+            margin-bottom: 35px;
+
+            font-size: 18px;
+        }
+
+        table{
+
+            width: 100%;
+
+            border-collapse: collapse;
+
+            overflow: hidden;
+
+            border-radius: 15px;
+        }
+
+        thead{
+
+            background: linear-gradient(
+                90deg,
+                #2563eb,
+                #1d4ed8
+            );
+
+            color: white;
+        }
+
+        th{
+
+            padding: 18px;
+
+            font-size: 16px;
+        }
+
+        td{
+
+            padding: 16px;
+
+            text-align: center;
+
+            border-bottom: 1px solid #e2e8f0;
+
+            transition: 0.3s;
+        }
+
+        tbody tr{
+
+            transition: 0.3s;
+        }
+
+        tbody tr:hover{
+
+            background: #eff6ff;
+
+            transform: scale(1.01);
+        }
+
+        .money{
+
+            color: #16a34a;
+
+            font-weight: bold;
+        }
+
+        .late{
+
+            color: white;
+
+            background: #dc2626;
+
+            padding: 8px 14px;
+
+            border-radius: 999px;
+
+            font-weight: bold;
+
+            display: inline-block;
+        }
+
+        .interest{
+
+        background: #f1f5f9;
+
+        padding: 12px 16px;
+
+        border-radius: 12px;
+
+        font-weight: bold;
+
+        display: inline-flex;
+
+        flex-direction: column;
+
+        gap: 10px;
+
+        min-width: 180px;
+
+        line-height: 1.5;
+        }
+
+        .customer{
+
+            font-weight: bold;
+
+            color: #0f172a;
+        }
+
+        .footer{
+
+            margin-top: 25px;
+
+            text-align: right;
+
+            color: #64748b;
+        }
+
+        .card-top{
+
+            display: flex;
+
+            justify-content: space-between;
+
+            margin-bottom: 30px;
+
+            gap: 20px;
+        }
+
+        .card{
+
+            flex: 1;
+
+            padding: 25px;
+
+            border-radius: 20px;
+
+            color: white;
+
+            box-shadow:
+                0 10px 20px rgba(0,0,0,0.15);
+        }
+
+        .card h2{
+
+            font-size: 18px;
+
+            margin-bottom: 10px;
+        }
+
+        .card p{
+
+            font-size: 32px;
+
+            font-weight: bold;
+        }
+
+        .red{
+            background: linear-gradient(135deg,#dc2626,#ef4444);
+        }
+
+        .blue{
+            background: linear-gradient(135deg,#2563eb,#3b82f6);
+        }
+
+        .green{
+            background: linear-gradient(135deg,#16a34a,#22c55e);
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1 class="title">
+            DANH SÁCH CON NỢ QUÁ HẠN
+        </h1>
+
+        <p class="sub-title">
+            Hệ thống quản lý tiệm cầm đồ bằng Django + MariaDB
+        </p>
+
+        <div class="card-top">
+
+            <div class="card red">
+
+                <h2>Số giao dịch quá hạn</h2>
+
+                <p>{{ ds_no|length }}</p>
+
+            </div>
+
+            <div class="card blue">
+
+                <h2>Ngày hiện tại</h2>
+
+                <p>{{ today|date:"d/m/Y" }}</p>
+
+            </div>
+
+            <div class="card green">
+
+                <h2>Tổng tiền gốc</h2>
+
+                <p>{{ tong_no|floatformat:0|intcomma }} VNĐ</p>
+
+            </div>
+
+        </div>
+
+        <table>
+
+            <thead>
+
+                <tr>
+
+                    <th>Khách hàng</th>
+                    <th>Giao dịch</th>
+                    <th>Tài sản</th>
+                    <th>Số tiền</th>
+                    <th>Bắt đầu</th>
+                    <th>Deadline</th>
+                    <th>Số ngày vay</th>
+                    <th>Quá hạn</th>
+                    <th>Lãi</th>
+
+                </tr>
+
+            </thead>
+
+            <tbody>
+
+                {% for gd in ds_no %}
+
+                <tr>
+
+                    <td class="customer">
+                        {{ gd.IdKH.TenKH }}
+                    </td>
+
+                    <td>
+                        {{ gd.TenGD }}
+                    </td>
+
+                    <td>
+                        {{ gd.TaiSan }}
+                    </td>
+
+                    <td class="money">
+                        {{ gd.SoTienGoc|floatformat:0|intcomma }} VNĐ
+                    </td>
+
+                    <td>
+                        {{ gd.NgayBatDau|date:"d/m/Y" }}
+                    </td>
+
+                    <td>
+                        {{ gd.Deadline|date:"d/m/Y" }}
+                    </td>
+
+                    <td>
+                        {{ gd.so_ngay_vay }} ngày
+                    </td>
+
+                    <td>
+
+                        <span class="late">
+                            {{ gd.so_ngay_qua_han }} ngày
+                        </span>
+
+                    </td>
+
+                    <td>
+
+                        <span class="interest">
+                                <div>
+                                    {{ gd.IdL.LoaiLai }}
+                                </div>
+
+                                <div style="color:#dc2626;font-size:18px;">
+
+                                    +{{ gd.tien_lai|floatformat:0|intcomma }} VNĐ
+
+                                </div>
+                        </span>
+
+                    </td>
+
+                </tr>
+
+                {% endfor %}
+
+            </tbody>
+
+        </table>
+
+        <div class="footer">
+
+            Django + MariaDB + Docker Compose
+
+        </div>
+
+    </div>
+
+</body>
+
+</html>
+```
+
+Sau đó, chỉnh sửa các file sau:
+
+Khai báo template folder, `sudo nano core/settings.py` Tìm đoạn:
+
+'DIRS': [],
+
+Đổi thành:
+
+'DIRS': [BASE_DIR / 'templates'],
+<img width="855" height="371" alt="image" src="https://github.com/user-attachments/assets/a0c91566-ad27-454f-ad07-22b6cf790586" />
+
+Tạo view home_page. `sudo nano camdoshop/views.py` có nội dung:
+```
+from decimal import Decimal
+
+from django.shortcuts import render
+from django.utils import timezone
+
+from .models import GiaoDich
 
 
-Hướng dẫn:
-- Tạo thư mục để chứa image tự buid cho django
-- Vào thư mục đó tạo file tên: Dockerfile (nội dung hỏi AI xem file này cần có nội dung gì, full comment cho từng dòng lệnh trong file này => mục tiêu kép: để hiểu và để hệ thống chạy được)
-- AI sẽ nói cần thêm file requirements.txt để cài các thư viện cho python (cài qua lệnh pip) => tạo file requirements.txt với nội dung tưng ứng, trong file này cũng comment được => comment xem thư viện nào dùng để làm gì
-- Sau mỗi lần sửa đỏi có thể phải chạy lệnh dạng : **docker compose exec TÊN_SERVICE_DJANGO_CỦA_BẠN python manage.py migrate** để tác động vào django (còn nhiều lệnh khác chứ ko luôn như này), để django thay đổi csdl hoặc thay đổi cấu hình.
+def home_page(request):
 
-  
+    today = timezone.now().date()
+
+    ds_no = GiaoDich.objects.filter(
+        Deadline__lt=today,
+        TrangThai__TenTT="Nợ quá hạn"
+    ).distinct()
+
+    tong_no = Decimal('0')
+
+    for gd in ds_no:
+
+        # số ngày vay
+        gd.so_ngay_vay = (
+            gd.Deadline - gd.NgayBatDau
+        ).days
+
+        # số ngày quá hạn
+        gd.so_ngay_qua_han = (
+            today - gd.Deadline
+        ).days
+
+        # số tháng vay
+        so_thang = Decimal(gd.so_ngay_vay) / Decimal('30')
+
+        # hệ số lãi
+        he_so_lai = Decimal(str(gd.IdL.HeSoLai))
+
+        # tiền lãi
+        gd.tien_lai = (
+            gd.SoTienGoc
+            * he_so_lai
+            * so_thang
+        )
+
+        tong_no += gd.SoTienGoc
+
+    context = {
+        'ds_no': ds_no,
+        'today': today,
+        'tong_no': tong_no
+    }
+
+    return render(request, 'home.html', context)
+```
+
+Tạo URL, `sudo nano core/urls.py` có nội dung:
+```
+from django.contrib import admin
+from django.urls import path
+
+from camdoshop.views import home_page
+
+urlpatterns = [
+    path('', home_page),
+    path('admin/', admin.site.urls),
+]
+```
+
+Ok, Sau khi đã thiết lập xong các file trên, kiểm tra bằng cách mở `sudo docker-compose restart django` sau đó mở lại http://192.168.56.10:8000 chờ khoảng 15s load lại nếu thấy giao diện là ok.
+<img width="959" height="506" alt="image" src="https://github.com/user-attachments/assets/cb734c11-2df9-4ed5-9d1a-6d34ca74b09d" />
+
+Tiếp đến là triển khai online qua cloudflare. Dùng luôn đường hầm có sẵn. Thêm phần này vào cuối file docker-compose.yml:
+```
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: camdoshop_cloudflared
+    restart: always
+
+    command: tunnel --no-autoupdate run --token eyJhIjoiNTI0YmRjMzY2YjgzZTg3N2RkMWIxM2MyMGJiNmY1YmIiLCJ0IjoiYWU5NzU2MjktZmEyNi00ZWRmLTkxMjAtNmNhODlkOGVkOWUwIiwicyI6Ill6ZzBZekU1T1RVdFpXUXlOaTAwTnpjM0xUZ3pZVFV0WWpJNVlqWXpORGsxWmpnNSJ9
+
+    depends_on:
+      - django
+```
+<img width="858" height="410" alt="image" src="https://github.com/user-attachments/assets/e3f496a1-836d-47aa-88e2-682ebe9468db" />
+
+ok; Giờ chưa chạy được đâu; ta phải tạo route mới 
+<img width="959" height="539" alt="image" src="https://github.com/user-attachments/assets/5e2d30a9-5141-46a9-b213-5141c67c90b3" />
+
+Sau đó cho phép truy cập host `sudo nano core/settings.py` thêm subdomain: 
+<img width="861" height="229" alt="image" src="https://github.com/user-attachments/assets/536ef036-e24e-4770-94da-0ee90f1587b0" />
+
+ok. Thiết lập xong; Giờ chạy 
+```
+sudo docker-compose down
+sudo docker-compose up -d
+```
+
+Kiểm tra tunnel chạy là ok;
+<img width="959" height="527" alt="image" src="https://github.com/user-attachments/assets/cf3f7ff0-8f50-49b3-a3e4-c3ee44c8136d" />
+
+Truy cập https://shopcamdo.firstmydm.io.vn/ ra giao diện là ngon luôn
+<img width="959" height="509" alt="image" src="https://github.com/user-attachments/assets/7d74f604-7bfb-4c7f-879d-c285796581d9" />
+
+Tiếp đến trang admin https://shopcamdo.firstmydm.io.vn/admin; Ta thấy có lỗi có vẻ là do chưa có trong CSRF_TRUSTED_ORIGINS;
+<img width="959" height="436" alt="image" src="https://github.com/user-attachments/assets/c77def08-bc33-43e1-a5cf-38b759e6cf49" />
+
+Ok ta thêm nó vào cuối file settings.py:
+<img width="864" height="438" alt="image" src="https://github.com/user-attachments/assets/35c075c3-10ba-4ed6-be6c-9a356bad0a70" />
+
+Sửa xong là vào ngon rồi:
+<img width="956" height="443" alt="image" src="https://github.com/user-attachments/assets/f9c9e011-a204-4313-b83d-16e0a24befe6" />
+
+<img width="959" height="443" alt="image" src="https://github.com/user-attachments/assets/f3995eb4-f533-43a8-8323-b3c3e2e3fefb" />
+
+OK; Vậy là em đã thực hiện xong bài tập; Django rất mạnh, bài tập đòi hỏi nhiều kiến thức của nhiều môn, có tính thực tế rất cao. Em rất thích bài thầy giao.
